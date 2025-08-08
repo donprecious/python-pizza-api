@@ -4,8 +4,9 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from testcontainers.postgres import PostgresContainer
-from app.containers import Container
-from app.core.config import Settings
+from app.core.config import Settings, get_settings
+from app.db.session import get_session_maker
+from main import create_app
 
 
 @pytest.fixture(scope="session")
@@ -22,22 +23,25 @@ def postgres_container():
 
 
 @pytest.fixture(scope="session")
-def app_container(postgres_container: PostgresContainer):
-    container = Container()
-    container.config.override(
-        Settings(
-            DB_HOST=postgres_container.get_container_host_ip(),
-            DB_PORT=postgres_container.get_exposed_port(5432),
-            DB_USER=postgres_container.username,
-            DB_PASSWORD=postgres_container.password,
-            DB_NAME=postgres_container.dbname,
-        )
+def settings(postgres_container: PostgresContainer):
+    return Settings(
+        DB_HOST=postgres_container.get_container_host_ip(),
+        DB_PORT=postgres_container.get_exposed_port(5432),
+        DB_USER=postgres_container.POSTGRES_USER,
+        DB_PASSWORD=postgres_container.POSTGRES_PASSWORD,
+        DB_NAME=postgres_container.POSTGRES_DB,
     )
-    return container
 
 
 @pytest.fixture(scope="session", autouse=True)
-def run_migrations(app_container: Container):
+def run_migrations(settings: Settings):
     alembic_cfg = Config("alembic.ini")
-    alembic_cfg.set_main_option("sqlalchemy.url", app_container.config().db_url)
+    alembic_cfg.set_main_option("sqlalchemy.url", settings.db_url)
     command.upgrade(alembic_cfg, "head")
+
+
+@pytest.fixture(scope="session")
+def app(settings: Settings):
+    app = create_app()
+    app.dependency_overrides[get_settings] = lambda: settings
+    return app

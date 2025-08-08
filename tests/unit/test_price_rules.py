@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from app.db.models import Extra, Pizza
-from app.domain.price_rules import PriceCalculator
+from app.core.price_rules import PriceCalculator
 
 
 def test_calculate_unit_price():

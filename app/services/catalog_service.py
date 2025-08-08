@@ -1,10 +1,10 @@
 import uuid
 from typing import Sequence
 
-from app.core.errors import NotFoundAppError
+from app.core.exceptions import NotFoundAppError
 from app.db.models import Extra, Pizza
-from app.repos.extra_repo import ExtraRepo
-from app.repos.pizza_repo import PizzaRepo
+from app.db.repositories.extra_repo import ExtraRepo
+from app.db.repositories.pizza_repo import PizzaRepo
 
 
 class CatalogService:

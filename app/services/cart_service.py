@@ -1,11 +1,11 @@
 import uuid
 from typing import Optional
 
-from app.core.errors import InvalidIdentityAppError, NotFoundAppError
+from app.core.exceptions import InvalidIdentityAppError, NotFoundAppError
 from app.db.models import Cart, CartItem
-from app.repos.cart_repo import CartRepo
-from app.repos.extra_repo import ExtraRepo
-from app.repos.pizza_repo import PizzaRepo
+from app.db.repositories.cart_repo import CartRepo
+from app.db.repositories.extra_repo import ExtraRepo
+from app.db.repositories.pizza_repo import PizzaRepo
 from app.schemas.cart import CartItemIn
 
 

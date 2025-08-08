@@ -1,11 +1,11 @@
 import uuid
 from decimal import Decimal
 
-from app.core.errors import NotFoundAppError
+from app.core.exceptions import NotFoundAppError
 from app.db.models import Order, OrderItem
-from app.domain.price_rules import PriceCalculator
-from app.repos.cart_repo import CartRepo
-from app.repos.order_repo import OrderRepo
+from app.core.price_rules import PriceCalculator
+from app.db.repositories.cart_repo import CartRepo
+from app.db.repositories.order_repo import OrderRepo
 from app.schemas.order import OrderIn
 
 

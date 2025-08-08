@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from structlog import get_logger
 
-from app.core.errors import (
+from app.core.exceptions import (
     AppError,
     ConflictAppError,
     InvalidIdentityAppError,
@@ -33,27 +34,25 @@ def add_exception_handlers(app: FastAPI):
         elif isinstance(exc, ValidationAppError):
             status_code = 422
 
-        return error(
-            exc.code,
-            exc.message,
-            field_errors=exc.field_errors,
-            status_code=status_code,
+        response = error(
+            exc,
+            message=exc.message,
         )
+        return JSONResponse(content=response.model_dump(), status_code=status_code)
 
     @app.exception_handler(ValidationError)
     async def handle_pydantic_validation_error(request: Request, exc: ValidationError):
-        return error(
-            "validation_error",
-            "Validation failed",
-            field_errors={str(err["loc"]): err["msg"] for err in exc.errors()},
-            status_code=422,
+        response = error(
+            exc.errors(),
+            message="Validation failed",
         )
+        return JSONResponse(content=response.model_dump(), status_code=422)
 
     @app.exception_handler(Exception)
     async def handle_generic_exception(request: Request, exc: Exception):
         logger.exception("unhandled_exception", exc_info=exc)
-        return error(
+        response = error(
             "internal_error",
-            "An unexpected error occurred.",
-            status_code=500,
+            message="An unexpected error occurred.",
         )
+        return JSONResponse(content=response.model_dump(), status_code=500)
