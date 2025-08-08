@@ -1,3 +1,4 @@
+from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,3 +19,7 @@ class Settings(BaseSettings):
     @property
     def db_url(self) -> str:
         return f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+@lru_cache()
+def get_settings():
+    return Settings()

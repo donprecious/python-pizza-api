@@ -1,7 +1,7 @@
 .PHONY: dev lint fmt type test seed
 
 dev:
-	uvicorn usersnack.main:app --reload
+	poetry run uvicorn main:app --reload
 
 lint:
 	poetry run ruff check .
