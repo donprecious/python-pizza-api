@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -7,6 +8,7 @@ from app.containers import Container
 from app.core.exception_handler import add_exception_handlers
 from app.core.limiter import limiter
 from app.core.logging import setup_logging
+from scripts.seed import main as seed_main
 
 
 def create_app() -> FastAPI:
@@ -35,6 +37,10 @@ def create_app() -> FastAPI:
     app.include_router(health.router, prefix="/health", tags=["health"])
 
     add_exception_handlers(app)
+
+    @app.on_event("startup")
+    async def startup_event():
+        await seed_main()
 
     return app
 

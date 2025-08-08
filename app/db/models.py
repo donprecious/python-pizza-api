@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 
-from sqlalchemy import Boolean, ForeignKey, Numeric, String, Text
+from sqlalchemy import ARRAY, Boolean, ForeignKey, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.orm import relationship
@@ -20,6 +20,7 @@ class Pizza(Base):
     name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     base_price: Mapped[float] = mapped_column(Numeric(12, 2))
     image_url: Mapped[str] = mapped_column(Text, nullable=True)
+    ingredients: Mapped[list[str]] = mapped_column(ARRAY(String))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
