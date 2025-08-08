@@ -12,16 +12,10 @@ from scripts.seed import main as seed_main
 
 
 def create_app() -> FastAPI:
-    container = Container()
-    container.wire(
-        modules=[
-            "app.api.v1.pizzas",
-            "app.api.v1.extras",
-            "app.api.v1.carts",
-            "app.api.v1.orders",
-        ]
-    )
     setup_logging()
+
+    container = Container()
+
     app = FastAPI(
         title="Usersnack API",
         description="A FastAPI backend for a pizza ordering service.",
@@ -29,6 +23,16 @@ def create_app() -> FastAPI:
     )
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore
+
+    app.container = container
+    app.container.wire(
+        modules=[
+            "app.api.v1.extras",
+            "app.api.v1.pizzas",
+            "app.api.v1.carts",
+            "app.api.v1.orders",
+        ]
+    )
 
     app.include_router(pizzas.router, prefix="/api/v1/pizzas", tags=["pizzas"])
     app.include_router(extras.router, prefix="/api/v1/extras", tags=["extras"])

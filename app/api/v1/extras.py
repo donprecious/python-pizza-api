@@ -17,4 +17,4 @@ async def list_extras(
     catalog_service: CatalogService = Depends(Provide[Container.catalog_service]),
 ):
     extras = await catalog_service.list_extras()
-    return ok(extras)
+    return extras
