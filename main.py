@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -7,7 +8,13 @@ from app.api.routers import carts, extras, health, orders, pizzas
 from app.core.exception_handler import add_exception_handlers
 from app.core.limiter import limiter
 from app.core.logging import setup_logging
+from scripts.seed import seed_db
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await seed_db()
+    yield
 
 def create_app() -> FastAPI:
     setup_logging()
@@ -16,10 +23,11 @@ def create_app() -> FastAPI:
         title="Usersnack API",
         description="A FastAPI backend for a pizza ordering service.",
         version="0.1.0",
+        lifespan=lifespan,
     )
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore
-
+    
     app.include_router(pizzas.router, prefix="/api/pizzas", tags=["pizzas"])
     app.include_router(extras.router, prefix="/api/extras", tags=["extras"])
     app.include_router(carts.router, prefix="/api/carts", tags=["carts"])
@@ -29,6 +37,7 @@ def create_app() -> FastAPI:
     add_exception_handlers(app)
 
     return app
+
 
 
 app = create_app()

@@ -23,7 +23,8 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 
-from app.db.models import Base, Cart, CartItem, Extra, Order, OrderItem, Pizza
+from app.db.base import Base
+from app.db.models import Cart, CartItem, Extra, Order, OrderItem, Pizza
 
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata

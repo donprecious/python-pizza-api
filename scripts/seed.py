@@ -26,7 +26,7 @@ async def seed_data(session: AsyncSession, data: list, model, name_field: str):
     await session.commit()
 
 
-async def main():
+async def seed_db():
     """
     Main function to seed the database.
     """
@@ -50,6 +50,12 @@ async def main():
         with open("extras.json", "r") as f:
             extras_data = json.load(f)
         await seed_data(session, extras_data, Extra, "name")
+
+async def main():
+    """
+    Main function to seed the database.
+    """
+    await seed_db()
 
 if __name__ == "__main__":
     asyncio.run(main())

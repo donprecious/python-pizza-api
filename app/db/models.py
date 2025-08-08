@@ -7,11 +7,10 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.orm import relationship
 
 
-class Base(DeclarativeBase):
-    pass
+from app.db.base import BaseModel
 
 
-class Pizza(Base):
+class Pizza(BaseModel):
     __tablename__ = "pizzas"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -24,7 +23,7 @@ class Pizza(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
-class Extra(Base):
+class Extra(BaseModel):
     __tablename__ = "extras"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -35,7 +34,7 @@ class Extra(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
-class Cart(Base):
+class Cart(BaseModel):
     __tablename__ = "carts"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -48,7 +47,7 @@ class Cart(Base):
     items: Mapped[List["CartItem"]] = relationship(back_populates="cart")
 
 
-class CartItem(Base):
+class CartItem(BaseModel):
     __tablename__ = "cart_items"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -63,7 +62,7 @@ class CartItem(Base):
     cart: Mapped[Cart] = relationship(back_populates="items")
 
 
-class Order(Base):
+class Order(BaseModel):
     __tablename__ = "orders"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -77,7 +76,7 @@ class Order(Base):
     customer_info: Mapped[dict] = mapped_column(JSON)
 
 
-class OrderItem(Base):
+class OrderItem(BaseModel):
     __tablename__ = "order_items"
 
     id: Mapped[uuid.UUID] = mapped_column(

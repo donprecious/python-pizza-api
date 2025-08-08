@@ -29,9 +29,10 @@ class PizzaOut(BaseModel):
     base_price: float
     image_url: str | None
     is_active: bool
+    ingredients: list[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ExtraOut(BaseModel):
@@ -42,3 +43,12 @@ class ExtraOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class PaginatedPizzaOut(BaseModel):
+    items: list[PizzaOut]
+    page: int
+    page_size: int
+    total: int
+
+

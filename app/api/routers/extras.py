@@ -19,3 +19,7 @@ async def list_extras(
 ):
     extras = await catalog_service.list_extras()
     return ok(extras)
+
+@router.get("/boom")
+def cause_error():
+    raise RuntimeError("Something went wrong!")
