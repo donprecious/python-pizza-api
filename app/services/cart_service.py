@@ -7,7 +7,10 @@ from app.db.models import Cart, CartItem
 from app.db.repositories.cart_repo import CartRepo
 from app.db.repositories.extra_repo import ExtraRepo
 from app.db.repositories.pizza_repo import PizzaRepo
-from app.schemas.cart import CartItemIn, CartItemOut, CartOut
+from app.schemas.cart import CartCheckout, CartItemIn, CartItemOut, CartOut
+from app.schemas.customer import CustomerInfoIn
+from app.schemas.order import OrderIn, OrderLineIn, OrderOut
+from app.services.order_service import OrderService
 
 
 class CartService:
@@ -16,10 +19,12 @@ class CartService:
         cart_repo: CartRepo,
         pizza_repo: PizzaRepo,
         extra_repo: ExtraRepo,
+        order_service: OrderService,
     ):
         self._cart_repo = cart_repo
         self._pizza_repo = pizza_repo
         self._extra_repo = extra_repo
+        self._order_service = order_service
 
     async def _get_cart(self, unique_identifier: str) -> Cart:
         return await self._cart_repo.find_or_create(unique_identifier)
@@ -88,3 +93,22 @@ class CartService:
     async def get_cart_details(self, unique_identifier: str) -> CartOut:
         cart = await self._get_cart(unique_identifier)
         return await self._calculate_cart_totals(cart)
+
+    async def checkout(self, customer_in: CustomerInfoIn) -> OrderOut:
+        cart = await self.get_cart_details(customer_in.unique_identifier)
+        if not cart.items:
+            raise NotFoundAppError("Cannot checkout with an empty cart")
+
+        order_lines = [
+            OrderLineIn(
+                pizza_id=item.pizza_id,
+                quantity=item.quantity,
+                extras=item.extras,
+            )
+            for item in cart.items
+        ]
+        order_in = OrderIn(lines=order_lines, customer=customer_in)
+        order = await self._order_service.create_order(order_in)
+
+        await self._cart_repo.clear(await self._get_cart(customer_in.unique_identifier))
+        return order

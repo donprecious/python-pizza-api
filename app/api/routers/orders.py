@@ -1,11 +1,11 @@
 import uuid
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.limiter import limiter
-from app.core.response import Response, ok
+from app.core.response import Response, ok, paginated
 from app.db.session import get_session_maker
 from app.db.repositories.cart_repo import CartRepo
 from app.db.repositories.order_repo import OrderRepo
@@ -67,3 +67,24 @@ async def get_order(
 ):
     order = await order_service.get_order(order_id)
     return ok(order)
+
+
+@router.get(
+    "/",
+    response_model=Response[List[OrderOut]],
+    summary="Get all orders",
+    description="Retrieves a list of all orders.",
+)
+async def get_all_orders(
+    unique_identifier: Optional[str] = None,
+    page: int = 1,
+    per_page: int = 10,
+    order_service: OrderService = Depends(get_order_service),
+):
+    skip = (page - 1) * per_page
+    result = await order_service.get_all_orders(
+        unique_identifier=unique_identifier, skip=skip, limit=per_page
+    )
+    return paginated(
+        result["items"], page=page, size=per_page, total=result["total"]
+    )

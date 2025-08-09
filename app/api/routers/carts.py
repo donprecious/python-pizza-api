@@ -11,6 +11,7 @@ from app.db.repositories.cart_repo import CartRepo
 from app.db.repositories.pizza_repo import PizzaRepo
 from app.db.repositories.extra_repo import ExtraRepo
 from app.schemas.cart import CartCheckout, CartItemIn, CartOut
+from app.schemas.order import OrderOut
 from app.services.cart_service import CartService
 from app.core.config import get_settings
 from app.api.deps import get_cart_service

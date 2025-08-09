@@ -48,14 +48,6 @@ def get_catalog_service(
     return CatalogService(pizza_repo=pizza_repo, extra_repo=extra_repo)
 
 
-def get_cart_service(
-    cart_repo: CartRepo = Depends(get_cart_repo),
-    pizza_repo: PizzaRepo = Depends(get_pizza_repo),
-    extra_repo: ExtraRepo = Depends(get_extra_repo),
-) -> CartService:
-    return CartService(cart_repo=cart_repo, pizza_repo=pizza_repo, extra_repo=extra_repo)
-
-
 def get_order_service(
     order_repo: OrderRepo = Depends(get_order_repo),
     cart_repo: CartRepo = Depends(get_cart_repo),
@@ -69,4 +61,17 @@ def get_order_service(
         customer_repo=customer_repo,
         pizza_repo=pizza_repo,
         extra_repo=extra_repo,
+    )
+
+def get_cart_service(
+    cart_repo: CartRepo = Depends(get_cart_repo),
+    pizza_repo: PizzaRepo = Depends(get_pizza_repo),
+    extra_repo: ExtraRepo = Depends(get_extra_repo),
+    order_service: OrderService = Depends(get_order_service),
+) -> CartService:
+    return CartService(
+        cart_repo=cart_repo,
+        pizza_repo=pizza_repo,
+        extra_repo=extra_repo,
+        order_service=order_service,
     )

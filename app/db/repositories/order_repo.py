@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional, List
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -30,6 +30,13 @@ class OrderRepo:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def count(self, unique_identifier: Optional[str] = None) -> int:
+        stmt = select(func.count()).select_from(Order)
+        if unique_identifier:
+            stmt = stmt.where(Order.uniqueIdentifier == unique_identifier)
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
+
     async def create(self, order: Order) -> Order:
         self.session.add(order)
         await self.session.commit()
@@ -37,3 +44,18 @@ class OrderRepo:
         print(order)
         print(order.items)
         return order
+
+    async def get_all(
+        self,
+        unique_identifier: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> List[Order]:
+        stmt = select(Order).options(
+            selectinload(Order.items), selectinload(Order.customer)
+        )
+        if unique_identifier:
+            stmt = stmt.where(Order.uniqueIdentifier == unique_identifier)
+        stmt = stmt.offset(skip).limit(limit)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

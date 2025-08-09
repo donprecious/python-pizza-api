@@ -10,7 +10,7 @@ from app.db.repositories.customer_repo import CustomerInfoRepo
 from app.db.repositories.pizza_repo import PizzaRepo
 from app.db.repositories.extra_repo import ExtraRepo
 from app.schemas.order import OrderIn, OrderLineIn, QuoteOrderLineOut, QuoteOut, OrderLineOut, OrderOut
-from typing import List
+from typing import List, Optional
 
 
 class OrderService:
@@ -121,3 +121,18 @@ class OrderService:
         if not order:
             raise NotFoundAppError(f"Order with id {order_id} not found")
         return order
+
+    async def get_all_orders(
+        self,
+        unique_identifier: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> dict:
+        orders = await self._order_repo.get_all(
+            unique_identifier=unique_identifier, skip=skip, limit=limit
+        )
+        total = await self._order_repo.count(unique_identifier=unique_identifier)
+        return {
+            "items": [OrderOut.model_validate(order) for order in orders],
+            "total": total,
+        }
