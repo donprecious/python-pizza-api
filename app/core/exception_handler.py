@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from structlog import get_logger
@@ -35,15 +36,35 @@ def add_exception_handlers(app: FastAPI):
             status_code = 422
 
         response = error(
-            exc,
+            exc.code,
             message=exc.message,
         )
         return JSONResponse(content=response.model_dump(), status_code=status_code)
 
+    @app.exception_handler(RequestValidationError)
+    async def handle_fastapi_validation_error(
+        request: Request, exc: RequestValidationError
+    ):
+        errors = {}
+        for err in exc.errors():
+            field = err["loc"][-1]
+            errors[field] = err["msg"]
+
+        response = error(
+            errors,
+            message="Validation failed",
+        )
+        return JSONResponse(content=response.model_dump(), status_code=400)
+
     @app.exception_handler(ValidationError)
     async def handle_pydantic_validation_error(request: Request, exc: ValidationError):
+        errors = {}
+        for err in exc.errors():
+            field = err["loc"][-1]
+            errors[field] = err["msg"]
+
         response = error(
-            exc.errors(),
+            errors,
             message="Validation failed",
         )
         return JSONResponse(content=response.model_dump(), status_code=422)

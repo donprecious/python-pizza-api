@@ -12,7 +12,7 @@ class Pizza(BaseModel):
     ingredients: list[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PizzaCreate(BaseModel):
@@ -42,7 +42,7 @@ class ExtraOut(BaseModel):
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PaginatedPizzaOut(BaseModel):

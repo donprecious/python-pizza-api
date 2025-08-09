@@ -45,3 +45,34 @@ def app(settings: Settings):
     app = create_app()
     app.dependency_overrides[get_settings] = lambda: settings
     return app
+
+
+@pytest.fixture(scope="session")
+def session(settings: Settings):
+    Session = get_session_maker(settings)
+    return Session()
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def seed_data(session):
+    import json
+    from app.db.models import Extra, Pizza
+    from scripts.seed import seed_data as seed_data_func
+
+    with open("pizza.json", "r") as f:
+        pizzas_data = json.load(f)
+
+    pizzas_to_seed = [
+        {
+            "name": p["name"],
+            "base_price": p["price"],
+            "image_url": p["img"],
+            "ingredients": p["ingredients"],
+        }
+        for p in pizzas_data
+    ]
+    await seed_data_func(session, pizzas_to_seed, Pizza, "name")
+
+    with open("extras.json", "r") as f:
+        extras_data = json.load(f)
+    await seed_data_func(session, extras_data, Extra, "name")

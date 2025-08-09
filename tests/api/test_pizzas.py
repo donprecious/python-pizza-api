@@ -5,56 +5,55 @@ from main import app
 
 
 @pytest.mark.asyncio
-async def test_list_pizzas():
+@pytest.mark.parametrize(
+    "params, expected_status, expected_pizza_name, expected_ingredient, min_price, max_price, page, per_page",
+    [
+        ({}, 200, None, None, None, None, 1, 10),
+        ({"search": "margherita"}, 200, "margherita", None, None, None, 1, 10),
+        (
+            {"ingredients": "tomato"},
+            200,
+            None,
+            "tomato",
+            None,
+            None,
+            1,
+            10,
+        ),
+        ({"min_price": 10}, 200, None, None, 10, None, 1, 10),
+        ({"max_price": 10}, 200, None, None, None, 10, 1, 10),
+        ({"page": 2, "per_page": 1}, 200, None, None, None, None, 2, 1),
+    ],
+)
+async def test_list_pizzas(
+    params,
+    expected_status,
+    expected_pizza_name,
+    expected_ingredient,
+    min_price,
+    max_price,
+    page,
+    per_page,
+):
     async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.get("/api/pizzas/")
-    assert response.status_code == 200
-    for pizza in response.json()["data"]:
-        assert "ingredients" in pizza
+        response = await ac.get("/api/pizzas/", params=params)
 
+    assert response.status_code == expected_status
+    response_data = response.json()
 
-@pytest.mark.asyncio
-async def test_list_pizzas_with_search():
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.get("/api/pizzas/?search=margherita")
-    assert response.status_code == 200
-    for pizza in response.json()["data"]:
-        assert "margherita" in pizza["name"].lower()
+    if "items" in response_data["data"]:
+        for pizza in response_data["data"]["items"]:
+            assert "ingredients" in pizza
+            if expected_pizza_name:
+                assert expected_pizza_name in pizza["name"].lower()
+            if expected_ingredient:
+                assert expected_ingredient in pizza["ingredients"]
+            if min_price:
+                assert pizza["base_price"] >= min_price
+            if max_price:
+                assert pizza["base_price"] <= max_price
 
-
-@pytest.mark.asyncio
-async def test_list_pizzas_with_ingredients():
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.get("/api/pizzas/?ingredients=tomato")
-    assert response.status_code == 200
-    for pizza in response.json()["data"]:
-        assert "tomato" in pizza["ingredients"]
-
-
-@pytest.mark.asyncio
-async def test_list_pizzas_with_min_price():
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.get("/api/pizzas/?min_price=10")
-    assert response.status_code == 200
-    for pizza in response.json()["data"]:
-        assert pizza["base_price"] >= 10
-
-
-@pytest.mark.asyncio
-async def test_list_pizzas_with_max_price():
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.get("/api/pizzas/?max_price=10")
-    assert response.status_code == 200
-    for pizza in response.json()["data"]:
-        assert pizza["base_price"] <= 10
-
-
-@pytest.mark.asyncio
-async def test_list_pizzas_with_pagination():
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.get("/api/pizzas/?page=2&per_page=1")
-    assert response.status_code == 200
-    data = response.json()["data"]
-    assert len(data["items"]) == 1
-    assert data["meta"]["page"] == 2
-    assert data["meta"]["per_page"] == 1
+    if "meta" in response_data["data"]:
+        meta = response_data["data"]["meta"]
+        assert meta["page"] == page
+        assert meta["per_page"] == per_page

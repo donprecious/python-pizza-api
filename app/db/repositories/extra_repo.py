@@ -17,3 +17,9 @@ class ExtraRepo:
     async def get_all(self) -> Sequence[Extra]:
         result = await self.session.execute(select(Extra).where(Extra.is_active))
         return result.scalars().all()
+
+    async def get_many(self, extra_ids: list[uuid.UUID]) -> Sequence[Extra]:
+        result = await self.session.execute(
+            select(Extra).where(Extra.id.in_(extra_ids))
+        )
+        return result.scalars().all()

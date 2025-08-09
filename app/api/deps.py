@@ -6,6 +6,7 @@ from fastapi import Depends
 from app.core.config import get_settings
 from app.db.session import get_session_maker
 from app.db.repositories.cart_repo import CartRepo
+from app.db.repositories.customer_repo import CustomerInfoRepo
 from app.db.repositories.extra_repo import ExtraRepo
 from app.db.repositories.order_repo import OrderRepo
 from app.db.repositories.pizza_repo import PizzaRepo
@@ -36,6 +37,10 @@ def get_order_repo(db: AsyncSession = Depends(get_db)) -> OrderRepo:
     return OrderRepo(db)
 
 
+def get_customer_repo(db: AsyncSession = Depends(get_db)) -> CustomerInfoRepo:
+    return CustomerInfoRepo(db)
+
+
 def get_catalog_service(
     pizza_repo: PizzaRepo = Depends(get_pizza_repo),
     extra_repo: ExtraRepo = Depends(get_extra_repo),
@@ -54,5 +59,14 @@ def get_cart_service(
 def get_order_service(
     order_repo: OrderRepo = Depends(get_order_repo),
     cart_repo: CartRepo = Depends(get_cart_repo),
+    customer_repo: CustomerInfoRepo = Depends(get_customer_repo),
+    pizza_repo: PizzaRepo = Depends(get_pizza_repo),
+    extra_repo: ExtraRepo = Depends(get_extra_repo),
 ) -> OrderService:
-    return OrderService(order_repo=order_repo, cart_repo=cart_repo)
+    return OrderService(
+        order_repo=order_repo,
+        cart_repo=cart_repo,
+        customer_repo=customer_repo,
+        pizza_repo=pizza_repo,
+        extra_repo=extra_repo,
+    )

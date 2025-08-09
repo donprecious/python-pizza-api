@@ -1,12 +1,13 @@
 import uuid
 from typing import Optional
 
+from decimal import Decimal
 from app.core.exceptions import InvalidIdentityAppError, NotFoundAppError
 from app.db.models import Cart, CartItem
 from app.db.repositories.cart_repo import CartRepo
 from app.db.repositories.extra_repo import ExtraRepo
 from app.db.repositories.pizza_repo import PizzaRepo
-from app.schemas.cart import CartItemIn
+from app.schemas.cart import CartItemIn, CartItemOut, CartOut
 
 
 class CartService:
@@ -20,27 +21,51 @@ class CartService:
         self._pizza_repo = pizza_repo
         self._extra_repo = extra_repo
 
-    async def _get_cart(
-        self, email: Optional[str] = None, token: Optional[uuid.UUID] = None
-    ) -> Cart:
-        if email:
-            cart = await self._cart_repo.get_by_email(email)
-        elif token:
-            cart = await self._cart_repo.get_by_token(token)
-        else:
-            raise InvalidIdentityAppError("Either email or token must be provided")
+    async def _get_cart(self, unique_identifier: str) -> Cart:
+        return await self._cart_repo.find_or_create(unique_identifier)
 
-        if not cart:
-            cart = await self._cart_repo.create(email=email, token=token)
-        return cart
+    async def _calculate_cart_totals(self, cart: Cart) -> CartOut:
+        items_out = []
+        subtotal = Decimal(0)
+
+        for item in cart.items:
+            pizza = await self._pizza_repo.get(item.pizza_id)
+            if not pizza:
+                raise NotFoundAppError(f"Pizza with id {item.pizza_id} not found")
+
+            extras = await self._extra_repo.get_many(
+                [uuid.UUID(str(eid)) for eid in item.selected_extras]
+            )
+            unit_extras_total = sum(Decimal(str(extra.price)) for extra in extras)
+            unit_price = Decimal(str(pizza.base_price)) + unit_extras_total
+            total_price = unit_price * item.quantity
+
+            items_out.append(
+                CartItemOut(
+                    id=item.id,
+                    pizza_id=item.pizza_id,
+                    quantity=item.quantity,
+                    extras=[extra.id for extra in extras],
+                    unit_price=float(unit_price),
+                    total_price=float(total_price),
+                )
+            )
+            subtotal += total_price
+
+        return CartOut(
+            id=cart.id,
+            unique_identifier=cart.uniqueIdentifier,
+            items=items_out,
+            subtotal=float(subtotal),
+            grand_total=float(subtotal),  # Assuming no additional charges for now
+        )
 
     async def add_to_cart(
         self,
         item_in: CartItemIn,
-        email: Optional[str] = None,
-        token: Optional[uuid.UUID] = None,
-    ) -> Cart:
-        cart = await self._get_cart(email, token)
+        unique_identifier: str,
+    ) -> CartOut:
+        cart = await self._get_cart(unique_identifier)
         pizza = await self._pizza_repo.get(item_in.pizza_id)
         if not pizza:
             raise NotFoundAppError(f"Pizza with id {item_in.pizza_id} not found")
@@ -56,9 +81,9 @@ class CartService:
             selected_extras=[extra.id for extra in extras if extra],
         )
         await self._cart_repo.add_item(cart_item)
-        return cart
+        cart = await self._get_cart(unique_identifier)
+        return await self._calculate_cart_totals(cart)
 
-    async def get_cart_details(
-        self, email: Optional[str] = None, token: Optional[uuid.UUID] = None
-    ) -> Cart:
-        return await self._get_cart(email, token)
+    async def get_cart_details(self, unique_identifier: str) -> CartOut:
+        cart = await self._get_cart(unique_identifier)
+        return await self._calculate_cart_totals(cart)

@@ -23,19 +23,17 @@ router = APIRouter()
 async def add_to_cart(
     request: Request,
     item_in: CartItemIn,
-    x_cart_email: Optional[str] = Header(None),
-    x_cart_token: Optional[uuid.UUID] = Header(None),
+    x_unique_identifier: str = Header(...),
     cart_service: CartService = Depends(get_cart_service),
 ):
-    cart = await cart_service.add_to_cart(item_in, x_cart_email, x_cart_token)
+    cart = await cart_service.add_to_cart(item_in, x_unique_identifier)
     return ok(cart)
 
 
 @router.get("/", response_model=Response[CartOut])
 async def get_cart(
-    x_cart_email: Optional[str] = Header(None),
-    x_cart_token: Optional[uuid.UUID] = Header(None),
+    x_unique_identifier: str = Header(...),
     cart_service: CartService = Depends(get_cart_service),
 ):
-    cart = await cart_service.get_cart_details(x_cart_email, x_cart_token)
+    cart = await cart_service.get_cart_details(x_unique_identifier)
     return ok(cart)

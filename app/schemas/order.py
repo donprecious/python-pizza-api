@@ -1,19 +1,28 @@
 import uuid
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, Field, field_validator, AliasChoices
+
+from app.schemas.customer import CustomerInfoIn
 
 
 class OrderLineIn(BaseModel):
     pizza_id: uuid.UUID
-    quantity: int
+    quantity: int = Field(gt=0, description="Quantity of the pizza, must be greater than 0.")
     extras: List[uuid.UUID] = []
+
+    @field_validator("pizza_id", mode="before")
+    @classmethod
+    def valid_uuid(cls, v):
+        try:
+            return uuid.UUID(str(v))
+        except ValueError:
+            raise ValueError("Invalid UUID format")
 
 
 class OrderIn(BaseModel):
-    email: EmailStr
     lines: List[OrderLineIn]
-    customer: Optional[dict] = None
+    customer: CustomerInfoIn
 
 
 class OrderLineOut(BaseModel):
@@ -27,6 +36,9 @@ class OrderLineOut(BaseModel):
 
 class OrderOut(BaseModel):
     id: uuid.UUID
+    unique_identifier: str = Field(
+        validation_alias=AliasChoices("uniqueIdentifier", "unique_identifier"),
+    )
     status: str
     subtotal: float
     extras_total: float
@@ -34,7 +46,8 @@ class OrderOut(BaseModel):
     lines: List[OrderLineOut]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+        populate_by_name = True
 
 
 class QuoteOut(BaseModel):
@@ -42,3 +55,6 @@ class QuoteOut(BaseModel):
     extras_total: float
     grand_total: float
     lines: List[OrderLineOut]
+
+    class Config:
+        from_attributes = True
