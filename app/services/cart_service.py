@@ -13,32 +13,31 @@ from app.schemas.order import OrderIn, OrderLineIn, OrderOut
 from app.services.order_service import OrderService
 
 
+from app.db.uow import UOWDep
+
+
 class CartService:
     def __init__(
         self,
-        cart_repo: CartRepo,
-        pizza_repo: PizzaRepo,
-        extra_repo: ExtraRepo,
+        uow: UOWDep,
         order_service: OrderService,
-    ):
-        self._cart_repo = cart_repo
-        self._pizza_repo = pizza_repo
-        self._extra_repo = extra_repo
+    ) -> None:
+        self._uow = uow
         self._order_service = order_service
 
     async def _get_cart(self, unique_identifier: str) -> Cart:
-        return await self._cart_repo.find_or_create(unique_identifier)
+        return await self._uow.carts.find_or_create(unique_identifier)
 
     async def _calculate_cart_totals(self, cart: Cart) -> CartOut:
         items_out = []
         subtotal = Decimal(0)
 
         for item in cart.items:
-            pizza = await self._pizza_repo.get(item.pizza_id)
+            pizza = await self._uow.pizzas.get(item.pizza_id)
             if not pizza:
                 raise NotFoundAppError(f"Pizza with id {item.pizza_id} not found")
 
-            extras = await self._extra_repo.get_many(
+            extras = await self._uow.extras.get_many(
                 [uuid.UUID(str(eid)) for eid in item.selected_extras]
             )
             unit_extras_total = sum(Decimal(str(extra.price)) for extra in extras)
@@ -70,29 +69,33 @@ class CartService:
         item_in: CartItemIn,
         unique_identifier: str,
     ) -> CartOut:
-        ''' add pizza to cart, even if the pizza already exists, we can add it as a new item, because the extras can be different, we just keep it flexible'''
-        cart = await self._get_cart(unique_identifier)
-        pizza = await self._pizza_repo.get(item_in.pizza_id)
-        if not pizza:
-            raise NotFoundAppError(f"Pizza with id {item_in.pizza_id} not found")
+        """add pizza to cart, even if the pizza already exists, we can add it as a new item, because the extras can be different, we just keep it flexible"""
+        async with self._uow:
+            cart = await self._get_cart(unique_identifier)
+            pizza = await self._uow.pizzas.get(item_in.pizza_id)
+            if not pizza:
+                raise NotFoundAppError(f"Pizza with id {item_in.pizza_id} not found")
 
-        extras = [await self._extra_repo.get(extra_id) for extra_id in item_in.extras]
-        if any(e is None for e in extras):
-            raise NotFoundAppError("One or more extras not found")
+            extras = [
+                await self._uow.extras.get(extra_id) for extra_id in item_in.extras
+            ]
+            if any(e is None for e in extras):
+                raise NotFoundAppError("One or more extras not found")
 
-        cart_item = CartItem(
-            cart_id=cart.id,
-            pizza_id=item_in.pizza_id,
-            quantity=item_in.quantity,
-            selected_extras=[str(extra.id) for extra in extras if extra],
-        )
-        await self._cart_repo.add_item(cart_item)
-        cart = await self._get_cart(unique_identifier)
-        return await self._calculate_cart_totals(cart)
+            cart_item = CartItem(
+                cart_id=cart.id,
+                pizza_id=item_in.pizza_id,
+                quantity=item_in.quantity,
+                selected_extras=[str(extra.id) for extra in extras if extra],
+            )
+            await self._uow.carts.add_item(cart_item)
+            cart = await self._get_cart(unique_identifier)
+            return await self._calculate_cart_totals(cart)
 
     async def get_cart_details(self, unique_identifier: str) -> CartOut:
-        cart = await self._get_cart(unique_identifier)
-        return await self._calculate_cart_totals(cart)
+        async with self._uow:
+            cart = await self._get_cart(unique_identifier)
+            return await self._calculate_cart_totals(cart)
 
     async def checkout(self, customer_in: CustomerInfoIn) -> OrderOut:
         cart = await self.get_cart_details(customer_in.unique_identifier)
@@ -108,7 +111,6 @@ class CartService:
             for item in cart.items
         ]
         order_in = OrderIn(lines=order_lines, customer=customer_in)
-        order = await self._order_service.create_order(order_in)
-
-        await self._cart_repo.clear(await self._get_cart(customer_in.unique_identifier))
+        cart_to_clear = await self._get_cart(customer_in.unique_identifier)
+        order = await self._order_service.create_order_for_cart(order_in, cart_to_clear)
         return order

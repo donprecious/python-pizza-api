@@ -8,12 +8,12 @@ from app.schemas.catalog import ExtraOut
 from app.services.catalog_service import CatalogService
 from app.db.repositories.extra_repo import ExtraRepo
 from app.db.repositories.pizza_repo import PizzaRepo
-from app.api.deps import get_db, get_catalog_service
+from app.api.deps import get_catalog_service
 
 router = APIRouter()
 
 
-@router.get("/", response_model=Response[List[ExtraOut]])
+@router.get("/", response_model=Response[list[ExtraOut]])
 async def list_extras(
     catalog_service: CatalogService = Depends(get_catalog_service),
 ):

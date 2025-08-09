@@ -49,7 +49,7 @@ def app(settings: Settings):
 
 @pytest.fixture(scope="session")
 def session(settings: Settings):
-    Session = get_session_maker(settings)
+    Session = get_session_maker()
     return Session()
 
 

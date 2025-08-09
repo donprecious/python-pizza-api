@@ -2,7 +2,6 @@ import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.limiter import limiter
 from app.core.response import Response, ok

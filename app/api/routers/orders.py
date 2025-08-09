@@ -47,7 +47,7 @@ This is useful for providing a price estimate to the customer before they procee
 """,
 )
 async def quote_order(
-    lines: List[OrderLineIn],
+    lines: list[OrderLineIn],
     order_service: OrderService = Depends(get_order_service),
 ):
     """Calculate price quote for a list of order lines."""
@@ -71,7 +71,7 @@ async def get_order(
 
 @router.get(
     "/",
-    response_model=Response[List[OrderOut]],
+    response_model=Response[list[OrderOut]],
     summary="Get all orders",
     description="Retrieves a list of all orders.",
 )

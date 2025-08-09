@@ -1,77 +1,42 @@
-from typing import AsyncGenerator
+from typing import Annotated, AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
-from app.db.session import get_session_maker
 from app.db.repositories.cart_repo import CartRepo
-from app.db.repositories.customer_repo import CustomerInfoRepo
+from app.db.repositories.customer_repo import CustomerRepo
 from app.db.repositories.extra_repo import ExtraRepo
 from app.db.repositories.order_repo import OrderRepo
 from app.db.repositories.pizza_repo import PizzaRepo
+from app.db.session import get_db_session
 from app.services.cart_service import CartService
 from app.services.catalog_service import CatalogService
 from app.services.order_service import OrderService
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    session_maker = get_session_maker(get_settings())
-    async with session_maker() as session:
-        yield session
+from app.db.uow import UnitOfWork
 
 
-def get_pizza_repo(db: AsyncSession = Depends(get_db)) -> PizzaRepo:
-    return PizzaRepo(db)
-
-
-def get_extra_repo(db: AsyncSession = Depends(get_db)) -> ExtraRepo:
-    return ExtraRepo(db)
-
-
-def get_cart_repo(db: AsyncSession = Depends(get_db)) -> CartRepo:
-    return CartRepo(db)
-
-
-def get_order_repo(db: AsyncSession = Depends(get_db)) -> OrderRepo:
-    return OrderRepo(db)
-
-
-def get_customer_repo(db: AsyncSession = Depends(get_db)) -> CustomerInfoRepo:
-    return CustomerInfoRepo(db)
+def get_uow(
+    session: Annotated[AsyncSession, Depends(get_db_session)]
+) -> UnitOfWork:
+    return UnitOfWork(session)
 
 
 def get_catalog_service(
-    pizza_repo: PizzaRepo = Depends(get_pizza_repo),
-    extra_repo: ExtraRepo = Depends(get_extra_repo),
+    uow: Annotated[UnitOfWork, Depends(get_uow)]
 ) -> CatalogService:
-    return CatalogService(pizza_repo=pizza_repo, extra_repo=extra_repo)
+    return CatalogService(uow)
 
 
 def get_order_service(
-    order_repo: OrderRepo = Depends(get_order_repo),
-    cart_repo: CartRepo = Depends(get_cart_repo),
-    customer_repo: CustomerInfoRepo = Depends(get_customer_repo),
-    pizza_repo: PizzaRepo = Depends(get_pizza_repo),
-    extra_repo: ExtraRepo = Depends(get_extra_repo),
+    uow: Annotated[UnitOfWork, Depends(get_uow)]
 ) -> OrderService:
-    return OrderService(
-        order_repo=order_repo,
-        cart_repo=cart_repo,
-        customer_repo=customer_repo,
-        pizza_repo=pizza_repo,
-        extra_repo=extra_repo,
-    )
+    return OrderService(uow)
+
 
 def get_cart_service(
-    cart_repo: CartRepo = Depends(get_cart_repo),
-    pizza_repo: PizzaRepo = Depends(get_pizza_repo),
-    extra_repo: ExtraRepo = Depends(get_extra_repo),
-    order_service: OrderService = Depends(get_order_service),
+    uow: Annotated[UnitOfWork, Depends(get_uow)],
+    order_service: Annotated[OrderService, Depends(get_order_service)],
 ) -> CartService:
-    return CartService(
-        cart_repo=cart_repo,
-        pizza_repo=pizza_repo,
-        extra_repo=extra_repo,
-        order_service=order_service,
-    )
+    return CartService(uow, order_service)

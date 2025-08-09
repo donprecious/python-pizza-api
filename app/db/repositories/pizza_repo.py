@@ -11,10 +11,10 @@ from app.db.models import Pizza
 
 class PizzaRepo:
     def __init__(self, session: AsyncSession):
-        self.session = session
+        self._session = session
 
     async def get(self, pizza_id: uuid.UUID) -> Pizza | None:
-        return await self.session.get(Pizza, pizza_id)
+        return await self._session.get(Pizza, pizza_id)
 
     async def get_all(
         self,
@@ -36,8 +36,8 @@ class PizzaRepo:
             query = query.where(Pizza.base_price <= max_price)
 
         total_query = select(func.count()).select_from(query.subquery())
-        total = await self.session.scalar(total_query) or 0
+        total = await self._session.scalar(total_query) or 0
 
         query = query.limit(page_size).offset((page - 1) * page_size)
-        result = await self.session.execute(query)
+        result = await self._session.execute(query)
         return result.scalars().all(), total

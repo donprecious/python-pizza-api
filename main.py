@@ -11,9 +11,18 @@ from app.core.logging import setup_logging
 from scripts.seed import seed_db
 
 
+from app.core.config import get_settings
+from app.db.session import get_session_maker
+from app.db.uow import UnitOfWork
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await seed_db()
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        uow = UnitOfWork(session)
+        async with uow:
+            await seed_db(uow)
     yield
 
 def create_app() -> FastAPI:

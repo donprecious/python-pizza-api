@@ -10,16 +10,15 @@ class Settings(BaseSettings):
     APP_ENV: str = "production"
     CURRENCY_CODE: str = "USD"
 
-    DB_HOST: str
-    DB_PORT: int
-    DB_USER: str
-    DB_PASSWORD: str
-    DB_NAME: str
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 5432
+    DB_USER: str = "user"
+    DB_PASSWORD: str = "password"
+    DB_NAME: str = "db"
 
     @property
     def db_url(self) -> str:
         return f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
-@lru_cache()
-def get_settings():
+def get_settings() -> Settings:
     return Settings()
