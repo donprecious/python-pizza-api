@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.limiter import limiter
@@ -10,7 +10,7 @@ from app.db.session import get_session_maker
 from app.db.repositories.cart_repo import CartRepo
 from app.db.repositories.pizza_repo import PizzaRepo
 from app.db.repositories.extra_repo import ExtraRepo
-from app.schemas.cart import CartItemIn, CartOut
+from app.schemas.cart import CartCheckout, CartItemIn, CartOut
 from app.services.cart_service import CartService
 from app.core.config import get_settings
 from app.api.deps import get_cart_service
@@ -23,17 +23,25 @@ router = APIRouter()
 async def add_to_cart(
     request: Request,
     item_in: CartItemIn,
-    x_unique_identifier: str = Header(...),
     cart_service: CartService = Depends(get_cart_service),
 ):
-    cart = await cart_service.add_to_cart(item_in, x_unique_identifier)
+    cart = await cart_service.add_to_cart(item_in, item_in.unique_identifier)
     return ok(cart)
 
 
-@router.get("/", response_model=Response[CartOut])
+@router.get("/{unique_identifier}", response_model=Response[CartOut])
 async def get_cart(
-    x_unique_identifier: str = Header(...),
+    unique_identifier: str,
     cart_service: CartService = Depends(get_cart_service),
 ):
-    cart = await cart_service.get_cart_details(x_unique_identifier)
+    cart = await cart_service.get_cart_details(unique_identifier)
     return ok(cart)
+
+
+@router.post("/checkout", response_model=Response[OrderOut])
+async def checkout_cart(
+    checkout_in: CartCheckout,
+    cart_service: CartService = Depends(get_cart_service),
+):
+    order = await cart_service.checkout(checkout_in.customer)
+    return ok(order)

@@ -65,6 +65,7 @@ class CartService:
         item_in: CartItemIn,
         unique_identifier: str,
     ) -> CartOut:
+        ''' add pizza to cart, even if the pizza already exists, we can add it as a new item, because the extras can be different, we just keep it flexible'''
         cart = await self._get_cart(unique_identifier)
         pizza = await self._pizza_repo.get(item_in.pizza_id)
         if not pizza:
@@ -78,7 +79,7 @@ class CartService:
             cart_id=cart.id,
             pizza_id=item_in.pizza_id,
             quantity=item_in.quantity,
-            selected_extras=[extra.id for extra in extras if extra],
+            selected_extras=[str(extra.id) for extra in extras if extra],
         )
         await self._cart_repo.add_item(cart_item)
         cart = await self._get_cart(unique_identifier)

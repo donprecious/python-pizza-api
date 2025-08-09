@@ -26,13 +26,33 @@ class OrderIn(BaseModel):
 
 
 class OrderLineOut(BaseModel):
+    id: uuid.UUID
     pizza_id: uuid.UUID
     quantity: int
-    extras: List[uuid.UUID]
+    extras: List[uuid.UUID] =  Field(
+        validation_alias=AliasChoices("extras", "selected_extras"),
+    )
     unit_base_price: float
     unit_extras_total: float
     line_total: float
 
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+    
+class QuoteOrderLineOut(BaseModel):
+    pizza_id: uuid.UUID
+    quantity: int
+    extras: List[uuid.UUID] =  Field(
+        validation_alias=AliasChoices("extras", "selected_extras"),
+    )
+    unit_base_price: float
+    unit_extras_total: float
+    line_total: float
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
 
 class OrderOut(BaseModel):
     id: uuid.UUID
@@ -43,7 +63,7 @@ class OrderOut(BaseModel):
     subtotal: float
     extras_total: float
     grand_total: float
-    lines: List[OrderLineOut]
+    lines: List[OrderLineOut] = Field(validation_alias="items")
 
     class Config:
         from_attributes = True
@@ -54,7 +74,7 @@ class QuoteOut(BaseModel):
     subtotal: float
     extras_total: float
     grand_total: float
-    lines: List[OrderLineOut]
+    lines: List[QuoteOrderLineOut]
 
     class Config:
         from_attributes = True

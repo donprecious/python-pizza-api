@@ -2,9 +2,11 @@ import uuid
 from typing import List
 
 from pydantic import BaseModel, Field, field_validator, AliasChoices
+from app.schemas.customer import CustomerInfoIn
 
 
 class CartItemIn(BaseModel):
+    unique_identifier: str = Field(..., min_length=1, description="Unique identifier for the cart, typically a email or any unique id.")
     pizza_id: uuid.UUID = Field(..., description="ID of the pizza to add to the cart.")
     quantity: int = Field(gt=0, le=99)
     extras: List[uuid.UUID] = Field([], description="List of extra IDs to add to the pizza.")
@@ -47,3 +49,7 @@ class CartOut(BaseModel):
     class Config:
         from_attributes = True
         populate_by_name = True
+
+
+class CartCheckout(BaseModel):
+    customer: CustomerInfoIn

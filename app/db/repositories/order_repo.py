@@ -33,5 +33,7 @@ class OrderRepo:
     async def create(self, order: Order) -> Order:
         self.session.add(order)
         await self.session.commit()
-        await self.session.refresh(order)
+        await self.session.refresh(order, attribute_names=["items", "customer"])
+        print(order)
+        print(order.items)
         return order

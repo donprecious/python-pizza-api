@@ -5,12 +5,15 @@ from pydantic import BaseModel, Field
 
 T = TypeVar("T")
 
+class ErrorResponse(BaseModel):
+    type: str
+    details: Optional[Dict[str, Any]] = None
 
 class Response(BaseModel, Generic[T]):
     is_success: bool = Field(True)
     data: Optional[T] = None
     message: str = "Success"
-    error: Optional[Any] = None
+    error: Optional[ErrorResponse] = None
     meta: Optional[Dict[str, Any]] = None
 
 
@@ -35,7 +38,7 @@ def paginated(
     )
 
 
-def error(error: Any, message: str = "Error") -> Response:
+def error(error: ErrorResponse, message: str = "Error") -> Response:
     """
     Returns a standard error response.
     """

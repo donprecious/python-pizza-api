@@ -37,6 +37,7 @@ class CartRepo:
     async def add_item(self, item: CartItem) -> CartItem:
         self.session.add(item)
         await self.session.commit()
+        await self.session.refresh(item)
         return item
 
     async def get_item(self, item_id: uuid.UUID) -> Optional[CartItem]:

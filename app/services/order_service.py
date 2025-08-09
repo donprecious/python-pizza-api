@@ -9,7 +9,7 @@ from app.db.repositories.order_repo import OrderRepo
 from app.db.repositories.customer_repo import CustomerInfoRepo
 from app.db.repositories.pizza_repo import PizzaRepo
 from app.db.repositories.extra_repo import ExtraRepo
-from app.schemas.order import OrderIn, OrderLineIn, QuoteOut, OrderLineOut
+from app.schemas.order import OrderIn, OrderLineIn, QuoteOrderLineOut, QuoteOut, OrderLineOut, OrderOut
 from typing import List
 
 
@@ -57,7 +57,8 @@ class OrderService:
             extras_total += unit_extras_total * line.quantity
 
             order_items.append(
-                OrderLineOut(
+                QuoteOrderLineOut(
+                
                     pizza_id=line.pizza_id,
                     quantity=line.quantity,
                     extras=line.extras,
@@ -76,7 +77,7 @@ class OrderService:
             lines=order_items,
         )
 
-    async def create_order(self, order_in: OrderIn) -> Order:
+    async def create_order(self, order_in: OrderIn) -> OrderOut:
         # Find or create customer
         unique_identifier = order_in.customer.unique_identifier
         customer = await self._customer_repo.find_or_create(
@@ -111,7 +112,9 @@ class OrderService:
             grand_total=Decimal(str(quote.grand_total)),
             items=order_items,
         )
-        return await self._order_repo.create(order)
+        created_order = await self._order_repo.create(order)
+        print(created_order)
+        return OrderOut.model_validate(created_order)
 
     async def get_order(self, order_id: uuid.UUID) -> Order:
         order = await self._order_repo.get(order_id)
