@@ -13,7 +13,15 @@ type:
 	poetry run mypy .
 
 test:
-	poetry run pytest
+	poetry run pytest tests/ -v
+
+test-unit:
+	poetry run pytest tests/unit/ -v
+
+test-e2e:
+	poetry run pytest tests/e2e/ -v
+
+
 
 seed:
 	python -m usersnack.scripts.seed_from_data
