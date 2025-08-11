@@ -638,4 +638,6 @@ docker run -p 8000:8000 --env-file .env usersnack-api
    - Add to cart: `POST /api/carts/items`
    - Checkout: `POST /api/carts/checkout`
 
-For detailed API usage examples, visit the interactive documentation at `/docs` when the application is running.
+For detailed API usage examples, visit the interactive documentation at `/docs` when the 
+api doc [https://documenter.getpostman.com/view/7534986/2sB3BEoAvq](https://documenter.getpostman.com/view/7534986/2sB3BEoAvq)
+application is running.
