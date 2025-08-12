@@ -308,7 +308,7 @@ const Orders: React.FC = () => {
                       id="search"
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
-                      placeholder="Search by email or order ID..."
+                      placeholder="Search by email ..."
                       className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-black focus:border-black"
                     />
                   </div>
@@ -384,7 +384,7 @@ const Orders: React.FC = () => {
                         Order #{order.id.slice(-8)}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {formatDate(order.id)} {/* Using order ID as date placeholder */}
+                        {order.id}{/* Using order ID as date placeholder */}
                       </p>
                     </div>
                     <div className="flex items-center gap-4">
