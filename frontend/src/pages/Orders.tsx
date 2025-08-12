@@ -46,9 +46,12 @@ const Orders: React.FC = () => {
         setLoading(true);
         setError(null);
 
+        // Use search query as uniqueIdentifier if provided, otherwise use default email
+        const uniqueIdentifier = searchQuery.trim() || defaultEmail;
+        
         // Fetch orders, pizzas, and extras in parallel
         const [ordersResponse, pizzasResponse, extrasResponse] = await Promise.all([
-          apiService.getOrders(defaultEmail, currentPage, 10, searchQuery),
+          apiService.getOrders(uniqueIdentifier, currentPage, 10),
           apiService.getPizzas(),
           apiService.getExtras()
         ]);
