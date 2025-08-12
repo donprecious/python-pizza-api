@@ -1,4 +1,4 @@
-import type { Pizza, Extra, Order, ApiResponse, PaginatedResponse } from '../types';
+import type { Pizza, Extra, Order, ApiResponse, Page, OrderRequest, OrderResponse } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
@@ -38,11 +38,11 @@ class ApiService {
   }
 
   // Pizza endpoints
-  async getPizzas(page: number = 1, perPage: number = 10): Promise<PaginatedResponse<Pizza>> {
-    return this.request<PaginatedResponse<Pizza>>(`/pizzas?page=${page}&per_page=${perPage}`);
+  async getPizzas(page: number = 1, perPage: number = 10): Promise<ApiResponse<Page<Pizza>>> {
+    return this.request<ApiResponse<Page<Pizza>>>(`/pizzas?page=${page}&page_size=${perPage}`);
   }
 
-  async getPizza(id: number): Promise<ApiResponse<Pizza>> {
+  async getPizza(id: string): Promise<ApiResponse<Pizza>> {
     return this.request<ApiResponse<Pizza>>(`/pizzas/${id}`);
   }
 
@@ -61,6 +61,37 @@ class ApiService {
 
   async getOrder(id: number): Promise<ApiResponse<Order>> {
     return this.request<ApiResponse<Order>>(`/orders/${id}`);
+  }
+
+  // Checkout endpoint for new order flow
+  async checkout(orderData: OrderRequest): Promise<ApiResponse<OrderResponse>> {
+    return this.request<ApiResponse<OrderResponse>>('/orders/checkout', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    });
+  }
+
+  // Get orders by unique identifier with optional search filters
+  async getOrders(
+    uniqueIdentifier?: string,
+    page: number = 1,
+    perPage: number = 10,
+    searchQuery?: string
+  ): Promise<ApiResponse<OrderResponse[]>> {
+    const params = new URLSearchParams();
+    
+    if (uniqueIdentifier) {
+      params.append('unique_identifier', uniqueIdentifier);
+    }
+    
+    params.append('page', page.toString());
+    params.append('per_page', perPage.toString());
+    
+    if (searchQuery && searchQuery.trim()) {
+      params.append('search', searchQuery.trim());
+    }
+    
+    return this.request<ApiResponse<OrderResponse[]>>(`/orders/?${params.toString()}`);
   }
 
   // Health check
