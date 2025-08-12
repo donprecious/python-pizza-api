@@ -1,22 +1,79 @@
 version: "3.8"
 
 services:
-  app:
+  # Backend API service
+  backend:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     env_file:
-      - ../.env
+      - .env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: usersnack
+      DB_PASSWORD: password
+      DB_NAME: usersnack_db  
     depends_on:
       - postgres
+    networks:
+      - usersnack-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./logs/backend:/app/logs
 
+  # Frontend React application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - usersnack-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./logs/frontend:/var/log/nginx
+
+  # PostgreSQL database
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
+    env_file: .env
     environment:
-      POSTGRES_USER: ${DB__USER}
-      POSTGRES_PASSWORD: ${DB__PASSWORD}
-      POSTGRES_DB: ${DB__NAME}
+      POSTGRES_USER: usersnack
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: usersnack_db
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - usersnack-network
+    restart: unless-stopped
+    logging:
+      # driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  usersnack-network:
+    driver: bridge

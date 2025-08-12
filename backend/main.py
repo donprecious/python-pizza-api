@@ -10,16 +10,20 @@ from app.core.exception_handler import add_exception_handlers
 from app.core.limiter import limiter
 from app.core.logging import setup_logging
 from scripts.seed import seed_db
-
+import logging
 
 from app.core.config import get_settings
 from app.db.session import get_session_maker
 from app.db.uow import UnitOfWork
 
+log = logging.getLogger("uvicorn")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    log.info("Starting up...")
+    log.info("seed database...")
     session_maker = get_session_maker()
+
     async with session_maker() as session:
         uow = UnitOfWork(session)
         async with uow:
