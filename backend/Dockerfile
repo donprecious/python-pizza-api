@@ -14,6 +14,9 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
+    netcat-openbsd \
+    ca-certificates \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -33,6 +36,10 @@ RUN poetry config virtualenvs.create false \
 # Copy application code
 COPY . /app/
 
+# Copy entrypoint
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 # Create non-root user
 RUN adduser --disabled-password --gecos '' --shell /bin/bash user \
     && chown -R user:user /app
@@ -44,6 +51,9 @@ EXPOSE 8000
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
+
+# Run migrations first, then start the app
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Run application
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

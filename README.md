@@ -51,14 +51,28 @@ This will:
 - Build and start the frontend on `http://localhost:3000`
 - Start PostgreSQL database on `localhost:5432`
 
-### 4. Access the Application
+### 4. Run Database Migrations
+
+After the services are running, apply database migrations:
+
+```bash
+# Run migrations to set up the database schema
+docker-compose exec backend poetry run alembic upgrade head
+
+# Seed the database with initial data (optional)
+docker-compose exec backend poetry run python scripts/seed.py
+```
+
+**Note**: The backend automatically runs migrations on startup, but you can run them manually if needed.
+
+### 5. Access the Application
 
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
 - **Health Check**: http://localhost:8000/health
 
-### 5. Stop the Services
+### 6. Stop the Services
 
 ```bash
 docker-compose down
@@ -95,10 +109,13 @@ docker run -d \
   -p 5432:5432 \
   postgres:15-alpine
 
+# Wait for PostgreSQL to be ready (about 10-15 seconds)
+sleep 15
+
 # Run database migrations
 poetry run alembic upgrade head
 
-# Seed the database
+# Seed the database with initial data
 poetry run python scripts/seed.py
 
 # Start the backend server
@@ -204,6 +221,45 @@ poetry run pytest
 ```bash
 cd frontend
 npm run test
+```
+
+## 🗄️ Database Migrations
+
+### Automatic Migrations
+The backend automatically runs migrations on startup, but you can also run them manually:
+
+### Manual Migration Commands
+
+```bash
+# Run all pending migrations
+docker-compose exec backend poetry run alembic upgrade head
+
+# Create a new migration (after model changes)
+docker-compose exec backend poetry run alembic revision --autogenerate -m "description of changes"
+
+# Check current migration status
+docker-compose exec backend poetry run alembic current
+
+# View migration history
+docker-compose exec backend poetry run alembic history
+
+# Rollback to previous migration
+docker-compose exec backend poetry run alembic downgrade -1
+```
+
+### For Local Development
+
+```bash
+cd backend
+
+# Run migrations locally
+poetry run alembic upgrade head
+
+# Create new migration
+poetry run alembic revision --autogenerate -m "description"
+
+# Check status
+poetry run alembic current
 ```
 
 ## 📊 API Documentation

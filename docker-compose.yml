@@ -15,7 +15,8 @@ services:
       DB_PORT: 5432
       DB_USER: usersnack
       DB_PASSWORD: password
-      DB_NAME: usersnack_db  
+      DB_NAME: usersnack_db1 
+      RUN_MIGRATIONS: "true"
     depends_on:
       - postgres
     networks:
@@ -56,7 +57,7 @@ services:
     environment:
       POSTGRES_USER: usersnack
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: usersnack_db
+      POSTGRES_DB: usersnack_db1
     ports:
       - "5432:5432"
     volumes:

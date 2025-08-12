@@ -38,7 +38,7 @@ const Orders: React.FC = () => {
   const [searchInput, setSearchInput] = useState('');
 
   // For demo purposes, we'll use a default email. In a real app, this would come from authentication
-  const defaultEmail = 'john.smith@example.com';
+  const defaultEmail = '';
 
   useEffect(() => {
     const fetchData = async () => {
