@@ -71,12 +71,11 @@ class ApiService {
     });
   }
 
-  // Get orders by unique identifier with optional search filters
+  // Get orders by unique identifier (email or order ID)
   async getOrders(
     uniqueIdentifier?: string,
     page: number = 1,
-    perPage: number = 10,
-    searchQuery?: string
+    perPage: number = 10
   ): Promise<ApiResponse<OrderResponse[]>> {
     const params = new URLSearchParams();
     
@@ -86,10 +85,6 @@ class ApiService {
     
     params.append('page', page.toString());
     params.append('per_page', perPage.toString());
-    
-    if (searchQuery && searchQuery.trim()) {
-      params.append('search', searchQuery.trim());
-    }
     
     return this.request<ApiResponse<OrderResponse[]>>(`/orders/?${params.toString()}`);
   }
